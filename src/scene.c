@@ -4,9 +4,10 @@
 #include <string.h>
 #include <stdio.h>
 
-#define MENU_ITEMS_NO_RESUME 6
+#define MENU_ITEMS_NO_RESUME 7
 static const char *menu_items_no_resume[MENU_ITEMS_NO_RESUME] = {
     "New Game",
+    "Game Mode",
     "Difficulty",
     "Options",
     "High Scores",
@@ -14,10 +15,11 @@ static const char *menu_items_no_resume[MENU_ITEMS_NO_RESUME] = {
     "Exit"
 };
 
-#define MENU_ITEMS_RESUME 7
+#define MENU_ITEMS_RESUME 8
 static const char *menu_items_resume[MENU_ITEMS_RESUME] = {
     "Resume",
     "New Game",
+    "Game Mode",
     "Difficulty",
     "Options",
     "High Scores",
@@ -40,12 +42,23 @@ static const char *opt_names[OPT_ITEM_COUNT] = {
     "Back"
 };
 
+#define MODE_ITEM_COUNT 6
+static const char *mode_names[MODE_ITEM_COUNT] = {
+    "Classic",
+    "Time Attack",
+    "Survival",
+    "Maze",
+    "No-Wall",
+    "Hardcore"
+};
+
 void Scene_Init(SceneManager *sm) {
     sm->current_scene = SCENE_MENU;
     sm->menu_selection = 0;
     sm->diff_selection = 0;
     sm->opt_selection = 0;
     sm->highscores_selection = 0;
+    sm->mode_selection = 0;
     sm->has_saved_game = 0;
 }
 
@@ -98,6 +111,23 @@ void Scene_UpdateMenu(SceneManager *sm, GameSettings *settings) {
                     sm->has_saved_game = 0;
                     sm->current_scene = SCENE_PLAYING;
                     break;
+                case 2: sm->current_scene = SCENE_MODE_SELECT; break;
+                case 3: sm->current_scene = SCENE_DIFFICULTY; break;
+                case 4: sm->current_scene = SCENE_OPTIONS; break;
+                case 5: sm->current_scene = SCENE_HIGH_SCORES; break;
+                case 6: // Save & Quit
+                    Save_SaveSettings(settings);
+                    sm->current_scene = SCENE_EXIT;
+                    break;
+                case 7: sm->current_scene = SCENE_EXIT; break;
+            }
+        } else {
+            // No resume mode menu
+            switch (sm->menu_selection) {
+                case 0: // New Game
+                    sm->current_scene = SCENE_PLAYING;
+                    break;
+                case 1: sm->current_scene = SCENE_MODE_SELECT; break;
                 case 2: sm->current_scene = SCENE_DIFFICULTY; break;
                 case 3: sm->current_scene = SCENE_OPTIONS; break;
                 case 4: sm->current_scene = SCENE_HIGH_SCORES; break;
@@ -106,21 +136,6 @@ void Scene_UpdateMenu(SceneManager *sm, GameSettings *settings) {
                     sm->current_scene = SCENE_EXIT;
                     break;
                 case 6: sm->current_scene = SCENE_EXIT; break;
-            }
-        } else {
-            // No resume mode menu
-            switch (sm->menu_selection) {
-                case 0: // New Game
-                    sm->current_scene = SCENE_PLAYING;
-                    break;
-                case 1: sm->current_scene = SCENE_DIFFICULTY; break;
-                case 2: sm->current_scene = SCENE_OPTIONS; break;
-                case 3: sm->current_scene = SCENE_HIGH_SCORES; break;
-                case 4: // Save & Quit
-                    Save_SaveSettings(settings);
-                    sm->current_scene = SCENE_EXIT;
-                    break;
-                case 5: sm->current_scene = SCENE_EXIT; break;
             }
         }
     }
@@ -137,9 +152,12 @@ void Scene_DrawMenu(const SceneManager *sm, const GameSettings *settings) {
     DrawText("SNAKE GAME", screen_w / 2 - MeasureText("SNAKE GAME", 50) / 2, 80, 50, GREEN);
     DrawText("by C & Raylib", screen_w / 2 - MeasureText("by C & Raylib", 20) / 2, 130, 20, GRAY);
 
-    // Difficulty indicator
+    // Difficulty and mode indicators
     DrawText(TextFormat("Difficulty: %s", Game_DifficultyName(settings->difficulty)),
              10, screen_h - 30, 15, DARKGRAY);
+    DrawText(TextFormat("Mode: %s", GameModeName(settings->mode)),
+             screen_w / 2 - MeasureText(TextFormat("Mode: %s", GameModeName(settings->mode)), 15) / 2,
+             screen_h - 30, 15, DARKGRAY);
     DrawText(TextFormat("High Score: %d", settings->high_score),
              screen_w - MeasureText(TextFormat("High Score: %d", settings->high_score), 15) - 10,
              screen_h - 30, 15, DARKGRAY);
@@ -288,6 +306,63 @@ void Scene_DrawOptions(const SceneManager *sm, const GameSettings *settings) {
             DrawText(status, x + 60, y, font_size, status_c);
         } else {
             DrawText(opt_names[i], x - MeasureText(opt_names[i], font_size) / 2, y, font_size, c);
+        }
+    }
+
+    DrawText("Press ESC to go back", 10, 10, 15, GRAY);
+}
+
+// ─── Mode Select ─────────────────────────────────────────
+void Scene_UpdateModeSelect(SceneManager *sm, GameSettings *settings) {
+    if (IsKeyPressed(KEY_UP) || IsKeyPressed(KEY_W)) {
+        sm->mode_selection = (sm->mode_selection - 1 + MODE_ITEM_COUNT) % MODE_ITEM_COUNT;
+    }
+    if (IsKeyPressed(KEY_DOWN) || IsKeyPressed(KEY_S)) {
+        sm->mode_selection = (sm->mode_selection + 1) % MODE_ITEM_COUNT;
+    }
+
+    Vector2 mouse = GetMousePosition();
+    int start_y = 200;
+    for (int i = 0; i < MODE_ITEM_COUNT; i++) {
+        Rectangle rect = { (GRID_WIDTH * CELL_SIZE) / 2 - 100, start_y + i * 50, 200, 40 };
+        if (CheckCollisionPointRec(mouse, rect)) sm->mode_selection = i;
+    }
+
+    if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE) || IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        settings->mode = (GameMode)sm->mode_selection;
+        Save_SaveSettings(settings);
+        sm->current_scene = SCENE_MENU;
+    }
+
+    if (IsKeyPressed(KEY_ESCAPE)) {
+        sm->current_scene = SCENE_MENU;
+    }
+}
+
+void Scene_DrawModeSelect(const SceneManager *sm, const GameSettings *settings) {
+    int screen_w = GRID_WIDTH * CELL_SIZE;
+
+    ClearBackground((Color){ 20, 20, 30, 255 });
+
+    DrawText("SELECT GAME MODE", screen_w / 2 - MeasureText("SELECT GAME MODE", 40) / 2, 100, 40, GREEN);
+
+    int start_y = 200;
+    for (int i = 0; i < MODE_ITEM_COUNT; i++) {
+        int x = screen_w / 2;
+        int y = start_y + i * 50;
+        int font_size = 25;
+        int text_w = MeasureText(mode_names[i], font_size);
+        int is_selected = (i == sm->mode_selection);
+        int is_current = (i == (int)settings->mode);
+        Color c = is_selected ? GREEN : LIGHTGRAY;
+
+        if (is_selected) {
+            DrawRectangle(x - text_w / 2 - 10, y - 5, text_w + 20, 35, (Color){ 50, 80, 50, 255 });
+        }
+        DrawText(mode_names[i], x - text_w / 2, y, font_size, c);
+
+        if (is_current && !is_selected) {
+            DrawText("(current)", x + text_w / 2 + 10, y, 15, DARKGRAY);
         }
     }
 

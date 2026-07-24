@@ -11,6 +11,7 @@ typedef enum {
     SCENE_DIFFICULTY,
     SCENE_OPTIONS,
     SCENE_HIGH_SCORES,
+    SCENE_MODE_SELECT,
     SCENE_EXIT
 } Scene;
 
@@ -20,6 +21,7 @@ typedef struct {
     int diff_selection;       // which difficulty is highlighted
     int opt_selection;        // which option is highlighted
     int highscores_selection; // which high score item is highlighted
+    int mode_selection;       // which game mode is highlighted
     int has_saved_game;       // 1 if there's a saved game to resume
 } SceneManager;
 
@@ -28,9 +30,11 @@ void Scene_UpdateMenu(SceneManager *sm, GameSettings *settings);
 void Scene_UpdateDifficulty(SceneManager *sm, GameSettings *settings);
 void Scene_UpdateOptions(SceneManager *sm, GameSettings *settings);
 void Scene_UpdateHighScores(SceneManager *sm);
+void Scene_UpdateModeSelect(SceneManager *sm, GameSettings *settings);
 void Scene_DrawMenu(const SceneManager *sm, const GameSettings *settings);
 void Scene_DrawDifficulty(const SceneManager *sm, const GameSettings *settings);
 void Scene_DrawOptions(const SceneManager *sm, const GameSettings *settings);
 void Scene_DrawHighScores(const SceneManager *sm, const GameSettings *settings);
+void Scene_DrawModeSelect(const SceneManager *sm, const GameSettings *settings);
 
 #endif // SCENE_H

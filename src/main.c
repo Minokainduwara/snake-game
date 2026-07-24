@@ -45,7 +45,7 @@ int main(void) {
             if (sm.current_scene == SCENE_PLAYING) {
                 if (sm.has_saved_game) {
                     // Resume from saved state
-                    Game_RestoreSnapshot(&game, &saved_snap);
+                    Game_RestoreSnapshot(&game, &saved_snap, settings.mode);
                     game_was_initialized = 1;
                     tick_timer = 0.0f;
                     food_needs_respawn = 0;
@@ -53,6 +53,14 @@ int main(void) {
                     // Start fresh
                     game_was_initialized = 0;
                 }
+            }
+
+            // Mode select
+            if (sm.current_scene == SCENE_MODE_SELECT) {
+                Scene_UpdateModeSelect(&sm, &settings);
+                BeginDrawing();
+                Scene_DrawModeSelect(&sm, &settings);
+                EndDrawing();
             }
 
             BeginDrawing();
@@ -64,7 +72,7 @@ int main(void) {
         else if (sm.current_scene == SCENE_PLAYING) {
             // Initialize game if not yet initialized
             if (!game_was_initialized) {
-                Game_Init(&game);
+                Game_Init(&game, settings.mode);
                 if (settings.sound_enabled) Audio_PlayStart();
                 game_was_initialized = 1;
                 tick_timer = 0.0f;
@@ -79,26 +87,31 @@ int main(void) {
 
             // ESC to save game and return to menu
             if (IsKeyPressed(KEY_ESCAPE)) {
-                Game_TakeSnapshot(&game, &saved_snap);
+                Game_TakeSnapshot(&game, &saved_snap, settings.mode);
                 Save_SaveGameState(&saved_snap);
                 sm.has_saved_game = 1;
                 sm.current_scene = SCENE_MENU;
             }
 
             // Update
-            float tick_rate = Game_GetTickRate(settings.difficulty);
+            float tick_rate = Game_GetTickRate(settings.difficulty, settings.mode, game.survival_level);
             tick_timer += GetFrameTime();
             if (tick_timer >= tick_rate) {
                 tick_timer = 0.0f;
 
                 if (food_needs_respawn) {
-                    game.food.x = rand() % GRID_WIDTH;
-                    game.food.y = rand() % GRID_HEIGHT;
+                    // Ensure food doesn't spawn on snake or obstacles
+                    int attempts = 0;
+                    do {
+                        game.food.x = rand() % GRID_WIDTH;
+                        game.food.y = rand() % GRID_HEIGHT;
+                        attempts++;
+                    } while (Game_ShouldSpawnFood(&game) && attempts < 100);
                     food_needs_respawn = 0;
                 }
 
                 int prev_length = game.length;
-                Game_Update(&game);
+                Game_Update(&game, settings.mode, tick_rate);
 
                 if (game.length > prev_length) {
                     if (settings.sound_enabled) Audio_PlayEat();
@@ -122,7 +135,7 @@ int main(void) {
 
             // Restart on R
             if (game.game_over && IsKeyPressed(KEY_R)) {
-                Game_Init(&game);
+                Game_Init(&game, settings.mode);
                 if (settings.sound_enabled) Audio_PlayStart();
                 tick_timer = 0.0f;
                 food_needs_respawn = 0;
@@ -138,9 +151,9 @@ int main(void) {
             ClearBackground(RAYWHITE);
             Game_Draw(&game, &settings);
 
-            // Show difficulty in corner
-            DrawText(TextFormat("[%s]", Game_DifficultyName(settings.difficulty)),
-                     SCREEN_WIDTH - MeasureText(TextFormat("[%s]", Game_DifficultyName(settings.difficulty)), 15) - 10,
+            // Show difficulty and mode in corner
+            DrawText(TextFormat("[%s] [%s]", Game_DifficultyName(settings.difficulty), GameModeName(settings.mode)),
+                     SCREEN_WIDTH - MeasureText(TextFormat("[%s] [%s]", Game_DifficultyName(settings.difficulty), GameModeName(settings.mode)), 15) - 10,
                      GRID_HEIGHT * CELL_SIZE + 10, 15, GRAY);
 
             EndDrawing();
@@ -161,6 +174,15 @@ int main(void) {
 
             BeginDrawing();
             Scene_DrawOptions(&sm, &settings);
+            EndDrawing();
+        }
+
+        // ─── SCENE: MODE SELECT ────────────────────────────
+        else if (sm.current_scene == SCENE_MODE_SELECT) {
+            Scene_UpdateModeSelect(&sm, &settings);
+
+            BeginDrawing();
+            Scene_DrawModeSelect(&sm, &settings);
             EndDrawing();
         }
 
