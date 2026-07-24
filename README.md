@@ -11,8 +11,9 @@ A classic Snake game built with **C** and **raylib** — cross-platform, with au
 
 ## 📋 Features
 
+- **6 Game Modes** — Classic, Time Attack, Survival, Maze, No-Wall, Hardcore
 - **Classic Snake gameplay** — eat food, grow, avoid walls and yourself
-- **Main Menu Dashboard** — Play, Resume, Difficulty, Options, High Scores
+- **Main Menu Dashboard** — Play, Resume, Game Mode, Difficulty, Options, High Scores
 - **4 Difficulty Levels** — Easy, Medium, Hard, Expert
 - **Sound Effects** — programmatically generated tones for eating, dying, and starting
 - **Options Menu** — toggle sound ON/OFF, toggle grid lines ON/OFF
@@ -20,7 +21,7 @@ A classic Snake game built with **C** and **raylib** — cross-platform, with au
 - **Cross-session Persistence** — game state saved to disk, continue after app restart
 - **High Score Tracking** — best score saved automatically
 - **Keyboard + Mouse** — navigate menus with arrows/WASD + Enter, or click with mouse
-- **Windows Installer** — download setup via GitHub Actions
+- **Cross-platform** — Windows, macOS, Linux with native installers
 
 ---
 
@@ -162,6 +163,17 @@ snake-game/
 | 🟡 Medium | 0.15s | Normal speed (default) |
 | 🟠 Hard | 0.10s | Fast |
 | 🔴 Expert | 0.06s | Very fast — for pros |
+
+## 🎲 Game Modes
+
+| Mode | Description |
+|------|-------------|
+| 🟦 Classic | Standard snake — walls kill, constant speed |
+| ⏱️ Time Attack | 2-minute countdown, eat as much as possible |
+| 📈 Survival | Speed increases every 30 seconds |
+| 🧱 Maze | 15 random obstacles spawn on the grid |
+| 🔄 No-Wall | Snake wraps around edges (Pac-Man style) |
+| 💀 Hardcore | Fixed high speed, one mistake = game over |
 
 ---
 

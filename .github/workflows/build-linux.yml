@@ -47,28 +47,11 @@ jobs:
           make install
           cd ..
           rm -rf raylib-${RAYLIB_VER} raylib-${RAYLIB_VER}.tar.gz raylib-build
-          
-          # Create pkg-config file if it wasn't installed
-          if [ ! -f raylib/lib/pkgconfig/raylib.pc ]; then
-            mkdir -p raylib/lib/pkgconfig
-            printf '%s\n' \
-              "prefix=${PWD}/raylib" \
-              "exec_prefix=\${prefix}" \
-              "libdir=\${exec_prefix}/lib" \
-              "includedir=\${prefix}/include" \
-              "" \
-              "Name: raylib" \
-              "Description: A simple and easy-to-use library to enjoy videogames programming" \
-              "Version: 6.0" \
-              "Libs: -L\${libdir} -lraylib -lGL -lm -lpthread -ldl -lrt -lX11" \
-              "Cflags: -I\${includedir}" \
-              > raylib/lib/pkgconfig/raylib.pc
-          fi
 
       - name: Build snake binary
         run: |
           make clean
-          PKG_CONFIG_PATH="${{ github.workspace }}/raylib/lib/pkgconfig:$PKG_CONFIG_PATH" make
+          CFLAGS="-I${{ github.workspace }}/raylib/include" LDFLAGS="-L${{ github.workspace }}/raylib/lib -lraylib -lGL -lm -lpthread -ldl -lrt -lX11" make
           ls -la snake
 
       - name: Package as tar.gz
