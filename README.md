@@ -4,7 +4,7 @@ A classic Snake game built with **C** and **raylib** — cross-platform, with au
 
 ![Language](https://img.shields.io/badge/language-C-blue)
 ![Library](https://img.shields.io/badge/library-raylib-green)
-![Platform](https://img.shields.io/badge/platform-macOS%20|%20Linux%20|%20Windows-lightgrey)
+![Platform](https://img.shields.io/badge/platform-macOS%20|%20Windows-lightgrey)
 ![Build](https://github.com/Minokainduwara/snake-game/actions/workflows/build-windows.yml/badge.svg)
 
 ---
@@ -21,7 +21,7 @@ A classic Snake game built with **C** and **raylib** — cross-platform, with au
 - **Cross-session Persistence** — game state saved to disk, continue after app restart
 - **High Score Tracking** — best score saved automatically
 - **Keyboard + Mouse** — navigate menus with arrows/WASD + Enter, or click with mouse
-- **Cross-platform** — Windows, macOS, Linux with native installers
+- **Cross-platform** — Windows and macOS with native installers
 
 ---
 
@@ -61,24 +61,6 @@ make
 make run
 ```
 
-### Android
-
-**Option A — Download APK (Recommended)**
-
-Download the latest `SnakeGame-Android.tar.gz` from:
-- **[Google Drive](https://drive.google.com/drive/folders/1gLkAr7Y5-7bxZy72AbD9YwjZ_4aN_ZjO?usp=sharing)** — direct download
-- **[GitHub Actions](https://github.com/Minokainduwara/snake-game/actions)** — automated build artifacts
-
-```bash
-tar -xzf SnakeGame-Android.tar.gz
-cd SnakeGame-Android
-# Transfer snake-android to your Android device and run with Termux or similar
-```
-
-**Option B — Build from source**
-
-Requires Android NDK and raylib built for Android.
-
 ### Windows
 
 **Option A — Download Installer (Recommended)**
@@ -105,7 +87,6 @@ make -f Makefile.windows
 | Platform | Compiler | raylib |
 |----------|----------|--------|
 | macOS | clang | `brew install raylib` |
-| Linux | gcc | `sudo apt install libraylib-dev` |
 | Windows (MSYS2) | MinGW-w64 | `pacman -S mingw-w64-x86_64-raylib` |
 
 ### Build
@@ -143,7 +124,8 @@ snake-game/
 ├── installer/
 │   └── setup.nsi        # NSIS Windows installer script
 ├── .github/workflows/
-│   └── build-windows.yml # GitHub Actions CI
+│   ├── build-windows.yml # Windows CI
+│   └── build-macos.yml   # macOS CI
 ├── Makefile              # macOS / Linux build
 ├── Makefile.windows      # Windows MinGW cross-compile
 └── saves/                # Settings & save data (auto-created)
@@ -190,7 +172,6 @@ Every push to `main` triggers automated builds for all platforms:
 |----------|----------|--------|
 | 🪟 Windows | `SnakeGame-Setup` | NSIS Installer (`.exe`) |
 | 🍎 macOS | `SnakeGame-macOS` | Disk Image (`.dmg`) |
-| 🤖 Android | `SnakeGame-Android` | Archive (`.tar.gz`) |
 
 Go to **[Actions tab](https://github.com/Minokainduwara/snake-game/actions)** to download the latest builds.
 
