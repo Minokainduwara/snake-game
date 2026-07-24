@@ -55,16 +55,16 @@ int main(void) {
                 }
             }
 
-            // Mode select
-            if (sm.current_scene == SCENE_MODE_SELECT) {
-                Scene_UpdateModeSelect(&sm, &settings);
-                BeginDrawing();
-                Scene_DrawModeSelect(&sm, &settings);
-                EndDrawing();
-            }
-
             BeginDrawing();
             Scene_DrawMenu(&sm, &settings);
+            EndDrawing();
+        }
+        // ─── SCENE: MODE SELECT ────────────────────────────
+        else if (sm.current_scene == SCENE_MODE_SELECT) {
+            Scene_UpdateModeSelect(&sm, &settings);
+
+            BeginDrawing();
+            Scene_DrawModeSelect(&sm, &settings);
             EndDrawing();
         }
 
