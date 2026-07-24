@@ -51,7 +51,7 @@ jobs:
       - name: Build snake binary
         run: |
           make clean
-          CFLAGS="-I${{ github.workspace }}/raylib/include" LDFLAGS="-L${{ github.workspace }}/raylib/lib -lraylib -lGL -lm -lpthread -ldl -lrt -lX11" make
+          make CC=cc CFLAGS="-I${{ github.workspace }}/raylib/include" LDFLAGS="-L${{ github.workspace }}/raylib/lib -lraylib -lGL -lm -lpthread -ldl -lrt -lX11"
           ls -la snake
 
       - name: Package as tar.gz
