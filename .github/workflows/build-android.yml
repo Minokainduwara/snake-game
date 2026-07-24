@@ -1,0 +1,102 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Android NDK and dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake make
+          sudo apt-get install -y libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libgl-dev
+
+      - name: Download and setup Android NDK
+        run: |
+          NDK_VERSION="r27b"
+          wget -q "https://dl.google.com/android/repository/android-ndk-${NDK_VERSION}-linux.zip"
+          unzip -q "android-ndk-${NDK_VERSION}-linux.zip"
+          echo "ANDROID_NDK_HOME=${{ github.workspace }}/android-ndk-${NDK_VERSION}" >> $GITHUB_ENV
+          echo "${{ github.workspace }}/android-ndk-${NDK_VERSION}/toolchains/llvm/prebuilt/linux-x86_64/bin" >> $GITHUB_PATH
+
+      - name: Build raylib for Android
+        run: |
+          RAYLIB_VER="6.0"
+          wget -q "https://github.com/raysan5/raylib/archive/refs/tags/${RAYLIB_VER}.tar.gz"
+          tar -xzf "${RAYLIB_VER}.tar.gz"
+          
+          mkdir -p raylib-build
+          cd raylib-build
+          cmake ../raylib-${RAYLIB_VER} \
+            -DCMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/android-ndk-r27b/build/cmake/android.toolchain.cmake \
+            -DANDROID_ABI=arm64-v8a \
+            -DANDROID_PLATFORM=android-24 \
+            -DCMAKE_INSTALL_PREFIX=../raylib-android \
+            -DBUILD_SHARED_LIBS=OFF \
+            -DPLATFORM=Android \
+            -DENABLE_OPENGL_AUTO_DETECT=ON
+          
+          make -j$(nproc)
+          make install
+          cd ..
+          rm -rf raylib-${RAYLIB_VER} raylib-${RAYLIB_VER}.tar.gz raylib-build
+
+      - name: Build snake for Android
+        run: |
+          mkdir -p obj-android
+          ${{ github.workspace }}/android-ndk-r27b/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android24-clang \
+            -I${{ github.workspace }}/raylib-android/include \
+            -Wall -Wextra -std=c99 \
+            -c src/audio.c -o obj-android/audio.o
+          
+          ${{ github.workspace }}/android-ndk-r27b/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android24-clang \
+            -I${{ github.workspace }}/raylib-android/include \
+            -Wall -Wextra -std=c99 \
+            -c src/game.c -o obj-android/game.o
+          
+          ${{ github.workspace }}/android-ndk-r27b/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android24-clang \
+            -I${{ github.workspace }}/raylib-android/include \
+            -Wall -Wextra -std=c99 \
+            -c src/main.c -o obj-android/main.o
+          
+          ${{ github.workspace }}/android-ndk-r27b/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android24-clang \
+            -I${{ github.workspace }}/raylib-android/include \
+            -Wall -Wextra -std=c99 \
+            -c src/save.c -o obj-android/save.o
+          
+          ${{ github.workspace }}/android-ndk-r27b/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android24-clang \
+            -I${{ github.workspace }}/raylib-android/include \
+            -Wall -Wextra -std=c99 \
+            -c src/scene.c -o obj-android/scene.o
+          
+          ${{ github.workspace }}/android-ndk-r27b/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android24-clang \
+            -o snake-android \
+            obj-android/audio.o obj-android/game.o obj-android/main.o obj-android/save.o obj-android/scene.o \
+            -L${{ github.workspace }}/raylib-android/lib \
+            -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
+          
+          ls -la snake-android
+
+      - name: Package APK
+        run: |
+          mkdir -p SnakeGame-Android
+          cp snake-android SnakeGame-Android/
+          cp -r saves SnakeGame-Android/ 2>/dev/null || mkdir -p SnakeGame-Android/saves
+          tar -czf SnakeGame-Android.tar.gz SnakeGame-Android/
+          ls -la SnakeGame-Android.tar.gz
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: SnakeGame-Android
+          path: SnakeGame-Android.tar.gz

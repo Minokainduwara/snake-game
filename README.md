@@ -61,27 +61,23 @@ make
 make run
 ```
 
-### Linux
+### Android
 
-**Option A — Download tar.gz (Recommended)**
+**Option A — Download APK (Recommended)**
 
-Download the latest `SnakeGame-Linux.tar.gz` from:
+Download the latest `SnakeGame-Android.tar.gz` from:
 - **[Google Drive](https://drive.google.com/drive/folders/1gLkAr7Y5-7bxZy72AbD9YwjZ_4aN_ZjO?usp=sharing)** — direct download
 - **[GitHub Actions](https://github.com/Minokainduwara/snake-game/actions)** — automated build artifacts
 
 ```bash
-tar -xzf SnakeGame-Linux.tar.gz
-cd snake-game-linux
-./snake
+tar -xzf SnakeGame-Android.tar.gz
+cd SnakeGame-Android
+# Transfer snake-android to your Android device and run with Termux or similar
 ```
 
 **Option B — Build from source**
 
-```bash
-sudo apt install libraylib-dev   # Debian/Ubuntu
-make
-./snake
-```
+Requires Android NDK and raylib built for Android.
 
 ### Windows
 
@@ -194,7 +190,7 @@ Every push to `main` triggers automated builds for all platforms:
 |----------|----------|--------|
 | 🪟 Windows | `SnakeGame-Setup` | NSIS Installer (`.exe`) |
 | 🍎 macOS | `SnakeGame-macOS` | Disk Image (`.dmg`) |
-| 🐧 Linux | `SnakeGame-Linux` | Archive (`.tar.gz`) |
+| 🤖 Android | `SnakeGame-Android` | Archive (`.tar.gz`) |
 
 Go to **[Actions tab](https://github.com/Minokainduwara/snake-game/actions)** to download the latest builds.
 
