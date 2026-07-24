@@ -51,18 +51,18 @@ jobs:
           # Create pkg-config file if it wasn't installed
           if [ ! -f raylib/lib/pkgconfig/raylib.pc ]; then
             mkdir -p raylib/lib/pkgconfig
-            cat > raylib/lib/pkgconfig/raylib.pc << EOF
-            prefix=${PWD}/raylib
-            exec_prefix=\${prefix}
-            libdir=\${exec_prefix}/lib
-            includedir=\${prefix}/include
-            
-            Name: raylib
-            Description: A simple and easy-to-use library to enjoy videogames programming
-            Version: 6.0
-            Libs: -L\${libdir} -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
-            Cflags: -I\${includedir}
-            EOF
+            printf '%s\n' \
+              "prefix=${PWD}/raylib" \
+              "exec_prefix=\${prefix}" \
+              "libdir=\${exec_prefix}/lib" \
+              "includedir=\${prefix}/include" \
+              "" \
+              "Name: raylib" \
+              "Description: A simple and easy-to-use library to enjoy videogames programming" \
+              "Version: 6.0" \
+              "Libs: -L\${libdir} -lraylib -lGL -lm -lpthread -ldl -lrt -lX11" \
+              "Cflags: -I\${includedir}" \
+              > raylib/lib/pkgconfig/raylib.pc
           fi
 
       - name: Build snake binary
