@@ -15,10 +15,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install build tools
+      - name: Install build tools and dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential cmake make
+          sudo apt-get install -y libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libgl-dev
 
       - name: Cache raylib build
         id: cache-raylib
