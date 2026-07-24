@@ -51,7 +51,7 @@ jobs:
       - name: Build snake binary
         run: |
           make clean
-          make
+          PKG_CONFIG_PATH="${{ github.workspace }}/raylib/lib/pkgconfig:$PKG_CONFIG_PATH" make
           ls -la snake
 
       - name: Package as tar.gz
