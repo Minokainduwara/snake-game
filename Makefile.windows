@@ -1,0 +1,31 @@
+# Snake Game - MinGW Cross-Compilation Makefile
+# Used by GitHub Actions to build snake.exe for Windows
+# Usage: make -f Makefile.windows CC=x86_64-w64-mingw32-gcc
+
+CC ?= x86_64-w64-mingw32-gcc
+
+CFLAGS := -I./raylib/include -Wall -Wextra -std=c99
+LDFLAGS := -L./raylib/lib -lraylib -lopengl32 -lgdi32 -lwinmm -lm
+TARGET := snake.exe
+
+SRCDIR := src
+OBJDIR := obj-windows
+
+SRCS := $(wildcard $(SRCDIR)/*.c)
+OBJS := $(patsubst $(SRCDIR)/%.c, $(OBJDIR)/%.o, $(SRCS))
+
+.PHONY: all clean
+
+all: $(TARGET)
+
+$(OBJDIR):
+	mkdir -p $(OBJDIR)
+
+$(OBJDIR)/%.o: $(SRCDIR)/%.c | $(OBJDIR)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(TARGET): $(OBJS)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+
+clean:
+	rm -rf $(OBJDIR) $(TARGET)

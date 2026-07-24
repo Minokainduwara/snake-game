@@ -1,7 +1,9 @@
 # Build artifacts
 obj/
+obj-windows/
 snake
 snake.exe
+SnakeGame-Setup*.exe
 
 # IDE / Editor
 .vscode/
@@ -16,3 +18,6 @@ snake.exe
 
 # Save data (user-specific)
 saves/*.dat
+
+# MinGW raylib (downloaded by CI)
+raylib/

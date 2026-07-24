@@ -1,0 +1,67 @@
+name: Build Windows Installer
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:  # Allows manual trigger from GitHub Actions tab
+
+jobs:
+  build-windows:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install MinGW cross-compiler (mingw-w64)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mingw-w64 make
+
+      - name: Install raylib for MinGW (prebuilt)
+        run: |
+          # Download prebuilt raylib for MinGW
+          RAYLIB_VER="6.0"
+          wget -q "https://github.com/raysan5/raylib/releases/download/${RAYLIB_VER}/raylib-${RAYLIB_VER}_mingw-w64.zip"
+          unzip -q "raylib-${RAYLIB_VER}_mingw-w64.zip" -d raylib_temp
+          mkdir -p raylib
+          # Copy the correct architecture (x86_64)
+          cp -r raylib_temp/raylib-${RAYLIB_VER}_mingw-w64/x86_64-w64-mingw32/* raylib/ 2>/dev/null || \
+          cp -r raylib_temp/raylib-${RAYLIB_VER}_mingw-w64/* raylib/ 2>/dev/null || true
+          rm -rf raylib_temp raylib-${RAYLIB_VER}_mingw-w64.zip
+
+      - name: Build snake.exe with MinGW
+        run: |
+          make -f Makefile.windows CC=x86_64-w64-mingw32-gcc
+          ls -la snake.exe
+
+      - name: Install NSIS (Nullsoft Installer)
+        run: |
+          sudo apt-get install -y nsis
+
+      - name: Build installer with NSIS
+        run: |
+          # Copy snake.exe into the installer directory for NSIS
+          cp snake.exe installer/
+          # Create the NSIS installer
+          cd installer && makensis -NOCD -DVERSION=1.0.0 setup.nsi
+          mv SnakeGame-Setup*.exe ../
+          cd ..
+          ls -la SnakeGame-Setup*.exe
+
+      - name: Upload snake.exe (portable)
+        uses: actions/upload-artifact@v4
+        with:
+          name: snake-game-portable
+          path: snake.exe
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: SnakeGame-Setup
+          path: SnakeGame-Setup*.exe
