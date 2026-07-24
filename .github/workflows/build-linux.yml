@@ -15,10 +15,37 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install dependencies
+      - name: Install build tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y libraylib-dev make
+          sudo apt-get install -y build-essential cmake make
+
+      - name: Cache raylib build
+        id: cache-raylib
+        uses: actions/cache@v4
+        with:
+          path: raylib
+          key: ${{ runner.os }}-raylib-linux-6.0
+
+      - name: Build raylib from source
+        if: steps.cache-raylib.outputs.cache-hit != 'true'
+        run: |
+          RAYLIB_VER="6.0"
+          wget -q "https://github.com/raysan5/raylib/archive/refs/tags/${RAYLIB_VER}.tar.gz"
+          tar -xzf "${RAYLIB_VER}.tar.gz"
+          
+          mkdir -p raylib-build
+          cd raylib-build
+          cmake ../raylib-${RAYLIB_VER} \
+            -DCMAKE_INSTALL_PREFIX=../raylib \
+            -DBUILD_SHARED_LIBS=OFF \
+            -DPLATFORM=Desktop \
+            -DENABLE_OPENGL_AUTO_DETECT=ON
+          
+          make -j$(nproc)
+          make install
+          cd ..
+          rm -rf raylib-${RAYLIB_VER} raylib-${RAYLIB_VER}.tar.gz raylib-build
 
       - name: Build snake binary
         run: |
