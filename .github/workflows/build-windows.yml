@@ -18,37 +18,56 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Cache MinGW packages
+        id: cache-mingw
+        uses: actions/cache@v4
+        with:
+          path: |
+            /usr/bin/x86_64-w64-mingw32-gcc
+            /usr/bin/makensis
+          key: ${{ runner.os }}-mingw-nsis
+
       - name: Install MinGW cross-compiler (mingw-w64)
+        if: steps.cache-mingw.outputs.cache-hit != 'true'
         run: |
           sudo apt-get update
-          sudo apt-get install -y mingw-w64 make
+          sudo apt-get install -y mingw-w64 make nsis
+
+      - name: Cache raylib for MinGW
+        id: cache-raylib
+        uses: actions/cache@v4
+        with:
+          path: raylib
+          key: ${{ runner.os }}-raylib-mingw-6.0
 
       - name: Install raylib for MinGW (prebuilt)
+        if: steps.cache-raylib.outputs.cache-hit != 'true'
         run: |
-          # Download prebuilt raylib for MinGW
           RAYLIB_VER="6.0"
-          wget -q "https://github.com/raysan5/raylib/releases/download/${RAYLIB_VER}/raylib-${RAYLIB_VER}_mingw-w64.zip"
-          unzip -q "raylib-${RAYLIB_VER}_mingw-w64.zip" -d raylib_temp
+          ZIP_NAME="raylib-${RAYLIB_VER}_win64_mingw-w64.zip"
+          wget -q "https://github.com/raysan5/raylib/releases/download/${RAYLIB_VER}/${ZIP_NAME}"
+          unzip -q "${ZIP_NAME}" -d raylib_temp
           mkdir -p raylib
-          # Copy the correct architecture (x86_64)
-          cp -r raylib_temp/raylib-${RAYLIB_VER}_mingw-w64/x86_64-w64-mingw32/* raylib/ 2>/dev/null || \
-          cp -r raylib_temp/raylib-${RAYLIB_VER}_mingw-w64/* raylib/ 2>/dev/null || true
-          rm -rf raylib_temp raylib-${RAYLIB_VER}_mingw-w64.zip
+          # Copy include and lib directories
+          cp -r raylib_temp/raylib-${RAYLIB_VER}_win64_mingw-w64/include raylib/
+          cp -r raylib_temp/raylib-${RAYLIB_VER}_win64_mingw-w64/lib raylib/
+          rm -rf raylib_temp "${ZIP_NAME}"
+
+      - name: Cache compiled objects
+        id: cache-obj
+        uses: actions/cache@v4
+        with:
+          path: obj-windows
+          key: ${{ runner.os }}-obj-${{ hashFiles('src/*.c', 'src/*.h', 'Makefile.windows') }}
 
       - name: Build snake.exe with MinGW
         run: |
           make -f Makefile.windows CC=x86_64-w64-mingw32-gcc
           ls -la snake.exe
 
-      - name: Install NSIS (Nullsoft Installer)
-        run: |
-          sudo apt-get install -y nsis
-
       - name: Build installer with NSIS
         run: |
-          # Copy snake.exe into the installer directory for NSIS
           cp snake.exe installer/
-          # Create the NSIS installer
           cd installer && makensis -NOCD -DVERSION=1.0.0 setup.nsi
           mv SnakeGame-Setup*.exe ../
           cd ..
