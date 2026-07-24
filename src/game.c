@@ -122,6 +122,31 @@ int Game_ShouldSpawnFood(SnakeGame *game) {
     return 0;
 }
 
+void Game_TakeSnapshot(const SnakeGame *game, GameSnapshot *snap) {
+    for (int i = 0; i < game->length; i++) {
+        snap->body[i] = game->body[i];
+    }
+    snap->length = game->length;
+    snap->dir = game->dir;
+    snap->next_dir = game->next_dir;
+    snap->food = game->food;
+    snap->score = game->score;
+    snap->game_over = game->game_over;
+    snap->valid = 1;
+}
+
+void Game_RestoreSnapshot(SnakeGame *game, const GameSnapshot *snap) {
+    for (int i = 0; i < snap->length; i++) {
+        game->body[i] = snap->body[i];
+    }
+    game->length = snap->length;
+    game->dir = snap->dir;
+    game->next_dir = snap->next_dir;
+    game->food = snap->food;
+    game->score = snap->score;
+    game->game_over = snap->game_over;
+}
+
 float Game_GetTickRate(Difficulty diff) {
     switch (diff) {
         case DIFF_EASY:   return 0.20f;

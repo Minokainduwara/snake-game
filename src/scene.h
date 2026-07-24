@@ -20,6 +20,7 @@ typedef struct {
     int diff_selection;       // which difficulty is highlighted
     int opt_selection;        // which option is highlighted
     int highscores_selection; // which high score item is highlighted
+    int has_saved_game;       // 1 if there's a saved game to resume
 } SceneManager;
 
 void Scene_Init(SceneManager *sm);

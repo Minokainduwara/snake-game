@@ -43,11 +43,25 @@ typedef struct {
     int show_grid;
 } GameSettings;
 
+// Snapshot of game state for save/resume
+typedef struct {
+    Position body[MAX_SNAKE_LENGTH];
+    int length;
+    Direction dir;
+    Direction next_dir;
+    Position food;
+    int score;
+    int game_over;
+    int valid;  // 1 if this snapshot contains a valid game
+} GameSnapshot;
+
 void Game_Init(SnakeGame *game);
 void Game_Update(SnakeGame *game);
 void Game_Draw(SnakeGame *game, const GameSettings *settings);
 int Game_ShouldSpawnFood(SnakeGame *game);
 float Game_GetTickRate(Difficulty diff);
 const char *Game_DifficultyName(Difficulty diff);
+void Game_TakeSnapshot(const SnakeGame *game, GameSnapshot *snap);
+void Game_RestoreSnapshot(SnakeGame *game, const GameSnapshot *snap);
 
 #endif // GAME_H

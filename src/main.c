@@ -14,6 +14,7 @@ int main(void) {
 
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Snake Game");
     SetTargetFPS(60);
+    SetExitKey(0);  // Disable ESC from closing window — we handle ESC ourselves
 
     Audio_Init();
 
@@ -25,8 +26,13 @@ int main(void) {
     SceneManager sm;
     Scene_Init(&sm);
 
+    // Check if there's a saved game to resume
+    GameSnapshot saved_snap;
+    sm.has_saved_game = Save_LoadGameState(&saved_snap);
+
     // Game state
     SnakeGame game;
+    int game_was_initialized = 0;  // 0 = not yet, 1 = ready to play
     float tick_timer = 0.0f;
     int food_needs_respawn = 0;
 
@@ -35,6 +41,20 @@ int main(void) {
         if (sm.current_scene == SCENE_MENU) {
             Scene_UpdateMenu(&sm, &settings);
 
+            // If user selected Play/Resume, prepare the game
+            if (sm.current_scene == SCENE_PLAYING) {
+                if (sm.has_saved_game) {
+                    // Resume from saved state
+                    Game_RestoreSnapshot(&game, &saved_snap);
+                    game_was_initialized = 1;
+                    tick_timer = 0.0f;
+                    food_needs_respawn = 0;
+                } else {
+                    // Start fresh
+                    game_was_initialized = 0;
+                }
+            }
+
             BeginDrawing();
             Scene_DrawMenu(&sm, &settings);
             EndDrawing();
@@ -42,10 +62,11 @@ int main(void) {
 
         // ─── SCENE: PLAYING ───────────────────────────────
         else if (sm.current_scene == SCENE_PLAYING) {
-            // Initialize or restart game
-            if (game.game_over) {
+            // Initialize game if not yet initialized
+            if (!game_was_initialized) {
                 Game_Init(&game);
-                Audio_PlayStart();
+                if (settings.sound_enabled) Audio_PlayStart();
+                game_was_initialized = 1;
                 tick_timer = 0.0f;
                 food_needs_respawn = 0;
             }
@@ -56,8 +77,11 @@ int main(void) {
             if (IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_A))  game.next_dir = DIR_LEFT;
             if (IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_D)) game.next_dir = DIR_RIGHT;
 
-            // ESC to return to menu
+            // ESC to save game and return to menu
             if (IsKeyPressed(KEY_ESCAPE)) {
+                Game_TakeSnapshot(&game, &saved_snap);
+                Save_SaveGameState(&saved_snap);
+                sm.has_saved_game = 1;
                 sm.current_scene = SCENE_MENU;
             }
 
@@ -89,6 +113,10 @@ int main(void) {
                         settings.high_score = game.score;
                         Save_SaveSettings(&settings);
                     }
+
+                    // Clear saved game state on game over
+                    Save_ClearGameState();
+                    sm.has_saved_game = 0;
                 }
             }
 

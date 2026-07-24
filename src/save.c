@@ -23,3 +23,32 @@ void Save_LoadSettings(GameSettings *settings) {
     fread(settings, sizeof(GameSettings), 1, f);
     fclose(f);
 }
+
+void Save_SaveGameState(const GameSnapshot *snap) {
+    FILE *f = fopen(GAME_SAVE_FILE, "wb");
+    if (!f) return;
+
+    fwrite(snap, sizeof(GameSnapshot), 1, f);
+    fclose(f);
+}
+
+int Save_LoadGameState(GameSnapshot *snap) {
+    FILE *f = fopen(GAME_SAVE_FILE, "rb");
+    if (!f) {
+        snap->valid = 0;
+        return 0;
+    }
+
+    int result = fread(snap, sizeof(GameSnapshot), 1, f);
+    fclose(f);
+
+    if (result != 1 || !snap->valid) {
+        snap->valid = 0;
+        return 0;
+    }
+    return 1;
+}
+
+void Save_ClearGameState(void) {
+    remove(GAME_SAVE_FILE);
+}
