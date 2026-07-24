@@ -1,0 +1,172 @@
+# 🐍 Snake Game
+
+A classic Snake game built with **C** and **raylib** — cross-platform, with audio, difficulty settings, and save/resume support.
+
+![Language](https://img.shields.io/badge/language-C-blue)
+![Library](https://img.shields.io/badge/library-raylib-green)
+![Platform](https://img.shields.io/badge/platform-macOS%20|%20Linux%20|%20Windows-lightgrey)
+![Build](https://github.com/Minokainduwara/snake-game/actions/workflows/build-windows.yml/badge.svg)
+
+---
+
+## 📋 Features
+
+- **Classic Snake gameplay** — eat food, grow, avoid walls and yourself
+- **Main Menu Dashboard** — Play, Resume, Difficulty, Options, High Scores
+- **4 Difficulty Levels** — Easy, Medium, Hard, Expert
+- **Sound Effects** — programmatically generated tones for eating, dying, and starting
+- **Options Menu** — toggle sound ON/OFF, toggle grid lines ON/OFF
+- **Save & Resume** — press ESC to pause and save, resume anytime from the menu
+- **Cross-session Persistence** — game state saved to disk, continue after app restart
+- **High Score Tracking** — best score saved automatically
+- **Keyboard + Mouse** — navigate menus with arrows/WASD + Enter, or click with mouse
+- **Windows Installer** — download setup via GitHub Actions
+
+---
+
+## 🎮 Controls
+
+| Action | Keys |
+|--------|------|
+| Move Up | `↑` or `W` |
+| Move Down | `↓` or `S` |
+| Move Left | `←` or `A` |
+| Move Right | `→` or `D` |
+| Pause & Save | `ESC` |
+| Restart (game over) | `R` |
+| Menu Navigation | `↑` `↓` or `W` `S` |
+| Select | `ENTER` or `SPACE` or `Mouse Click` |
+| Go Back | `ESC` |
+
+---
+
+## 🖥️ Platforms
+
+### macOS
+
+**Prerequisites:** [raylib](https://www.raylib.com/) installed via Homebrew
+
+```bash
+brew install raylib
+make
+make run
+```
+
+### Linux
+
+**Prerequisites:** raylib installed via package manager
+
+```bash
+sudo apt install libraylib-dev   # Debian/Ubuntu
+make
+./snake
+```
+
+### Windows
+
+**Option A — Download Installer (Recommended)**
+
+1. Go to **[GitHub Actions](https://github.com/Minokainduwara/snake-game/actions)**
+2. Click the latest successful workflow run
+3. Download the **SnakeGame-Setup** artifact
+4. Run `SnakeGame-Setup-1.0.0.exe` on Windows 11
+
+**Option B — Build with MSYS2/MinGW**
+
+```bash
+pacman -S mingw-w64-x86_64-raylib
+make -f Makefile.windows
+```
+
+---
+
+## 🛠️ Build from Source
+
+### Prerequisites
+
+| Platform | Compiler | raylib |
+|----------|----------|--------|
+| macOS | clang | `brew install raylib` |
+| Linux | gcc | `sudo apt install libraylib-dev` |
+| Windows (MSYS2) | MinGW-w64 | `pacman -S mingw-w64-x86_64-raylib` |
+
+### Build
+
+```bash
+# Clone the repo
+git clone https://github.com/Minokainduwara/snake-game.git
+cd snake-game
+
+# Build
+make
+
+# Run
+make run
+```
+
+### Clean
+
+```bash
+make clean
+```
+
+---
+
+## 📁 Project Structure
+
+```
+snake-game/
+├── src/
+│   ├── main.c          # Scene-based game loop
+│   ├── game.c / .h     # Snake logic, difficulty system
+│   ├── scene.c / .h    # Menu, settings, high scores screens
+│   ├── save.c / .h     # File I/O for settings & game state
+│   └── audio.c / .h    # Programmatic sound generation
+├── installer/
+│   └── setup.nsi        # NSIS Windows installer script
+├── .github/workflows/
+│   └── build-windows.yml # GitHub Actions CI
+├── Makefile              # macOS / Linux build
+├── Makefile.windows      # Windows MinGW cross-compile
+└── saves/                # Settings & save data (auto-created)
+```
+
+---
+
+## ⚙️ Difficulty Levels
+
+| Level | Tick Rate | Description |
+|-------|-----------|-------------|
+| 🟢 Easy | 0.20s | Slow — great for beginners |
+| 🟡 Medium | 0.15s | Normal speed (default) |
+| 🟠 Hard | 0.10s | Fast |
+| 🔴 Expert | 0.06s | Very fast — for pros |
+
+---
+
+## 💾 Save System
+
+- **Settings** saved to `saves/snake_save.dat` (difficulty, sound, grid, high score)
+- **Game state** saved to `saves/snake_game.dat` when you press ESC during gameplay
+- **Resume** option appears on the main menu when a saved game exists
+- Game state is cleared on game over or when starting a new game
+
+---
+
+## 🧪 GitHub Actions
+
+Every push to `main` triggers an automated build:
+
+1. Cross-compiles `snake.exe` for Windows using MinGW
+2. Builds a full NSIS installer (`SnakeGame-Setup-1.0.0.exe`)
+3. Uploads both as downloadable artifacts
+
+Go to **[Actions tab](https://github.com/Minokainduwara/snake-game/actions)** to download the latest build.
+
+---
+
+## 📄 License
+
+Copyright © 2026 **Minoka Wickramasinghe**. All rights reserved.
+
+This project and its source code are protected under copyright law. Unauthorized copying, modification, distribution, or use of this software, via any medium, is strictly prohibited without prior written permission from the copyright holder.
