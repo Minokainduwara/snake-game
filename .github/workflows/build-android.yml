@@ -44,9 +44,10 @@ jobs:
             -DCMAKE_INSTALL_PREFIX=../raylib-android \
             -DBUILD_SHARED_LIBS=OFF \
             -DPLATFORM=Android \
-            -DENABLE_OPENGL_AUTO_DETECT=ON
+            -DENABLE_OPENGL_AUTO_DETECT=ON \
+            -DBUILD_EXAMPLES=OFF
           
-          make -j$(nproc)
+          make raylib -j$(nproc)
           make install
           cd ..
           rm -rf raylib-${RAYLIB_VER} raylib-${RAYLIB_VER}.tar.gz raylib-build
