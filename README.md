@@ -66,10 +66,11 @@ make
 
 **Option A — Download Installer (Recommended)**
 
-1. Go to **[GitHub Actions](https://github.com/Minokainduwara/snake-game/actions)**
-2. Click the latest successful workflow run
-3. Download the **SnakeGame-Setup** artifact
-4. Run `SnakeGame-Setup-1.0.0.exe` on Windows 11
+Download the latest setup from:
+- **[Google Drive](https://drive.google.com/drive/folders/1gLkAr7Y5-7bxZy72AbD9YwjZ_4aN_ZjO?usp=sharing)** — direct download
+- **[GitHub Actions](https://github.com/Minokainduwara/snake-game/actions)** — automated build artifacts
+
+Run `SnakeGame-Setup-1.0.0.exe` on Windows 11.
 
 **Option B — Build with MSYS2/MinGW**
 
