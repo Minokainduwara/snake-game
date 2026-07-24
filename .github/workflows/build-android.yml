@@ -84,7 +84,7 @@ jobs:
             -o snake-android \
             obj-android/audio.o obj-android/game.o obj-android/main.o obj-android/save.o obj-android/scene.o \
             -L${{ github.workspace }}/raylib-android/lib \
-            -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
+            -lraylib -lm -ldl
           
           ls -la snake-android
 
