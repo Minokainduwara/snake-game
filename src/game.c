@@ -74,13 +74,15 @@ void Game_Update(SnakeGame *game) {
     }
 }
 
-void Game_Draw(SnakeGame *game) {
-    // Draw grid lines
-    for (int x = 0; x <= GRID_WIDTH; x++) {
-        DrawLine(x * CELL_SIZE, 0, x * CELL_SIZE, GRID_HEIGHT * CELL_SIZE, LIGHTGRAY);
-    }
-    for (int y = 0; y <= GRID_HEIGHT; y++) {
-        DrawLine(0, y * CELL_SIZE, GRID_WIDTH * CELL_SIZE, y * CELL_SIZE, LIGHTGRAY);
+void Game_Draw(SnakeGame *game, const GameSettings *settings) {
+    // Draw grid lines (optional)
+    if (!settings || settings->show_grid) {
+        for (int x = 0; x <= GRID_WIDTH; x++) {
+            DrawLine(x * CELL_SIZE, 0, x * CELL_SIZE, GRID_HEIGHT * CELL_SIZE, LIGHTGRAY);
+        }
+        for (int y = 0; y <= GRID_HEIGHT; y++) {
+            DrawLine(0, y * CELL_SIZE, GRID_WIDTH * CELL_SIZE, y * CELL_SIZE, LIGHTGRAY);
+        }
     }
 
     // Draw snake
@@ -101,7 +103,7 @@ void Game_Draw(SnakeGame *game) {
 
     // Draw game over
     if (game->game_over) {
-        const char *msg = "GAME OVER - Press R to restart";
+        const char *msg = "GAME OVER - Press R to restart or ESC for menu";
         int text_w = MeasureText(msg, 30);
         DrawRectangle(0, GRID_HEIGHT * CELL_SIZE / 2 - 30,
                       GRID_WIDTH * CELL_SIZE, 60, Fade(BLACK, 0.7f));
@@ -118,4 +120,24 @@ int Game_ShouldSpawnFood(SnakeGame *game) {
         }
     }
     return 0;
+}
+
+float Game_GetTickRate(Difficulty diff) {
+    switch (diff) {
+        case DIFF_EASY:   return 0.20f;
+        case DIFF_MEDIUM: return 0.15f;
+        case DIFF_HARD:   return 0.10f;
+        case DIFF_EXPERT: return 0.06f;
+        default:          return 0.15f;
+    }
+}
+
+const char *Game_DifficultyName(Difficulty diff) {
+    switch (diff) {
+        case DIFF_EASY:   return "Easy";
+        case DIFF_MEDIUM: return "Medium";
+        case DIFF_HARD:   return "Hard";
+        case DIFF_EXPERT: return "Expert";
+        default:          return "Unknown";
+    }
 }

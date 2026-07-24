@@ -13,3 +13,6 @@ snake.exe
 # macOS
 .DS_Store
 *.dSYM/
+
+# Save data (user-specific)
+saves/*.dat

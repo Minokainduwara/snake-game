@@ -14,6 +14,13 @@ typedef enum {
     DIR_RIGHT
 } Direction;
 
+typedef enum {
+    DIFF_EASY = 0,
+    DIFF_MEDIUM,
+    DIFF_HARD,
+    DIFF_EXPERT
+} Difficulty;
+
 typedef struct {
     int x;
     int y;
@@ -29,9 +36,18 @@ typedef struct {
     int game_over;
 } SnakeGame;
 
+typedef struct {
+    int high_score;
+    Difficulty difficulty;
+    int sound_enabled;
+    int show_grid;
+} GameSettings;
+
 void Game_Init(SnakeGame *game);
 void Game_Update(SnakeGame *game);
-void Game_Draw(SnakeGame *game);
+void Game_Draw(SnakeGame *game, const GameSettings *settings);
 int Game_ShouldSpawnFood(SnakeGame *game);
+float Game_GetTickRate(Difficulty diff);
+const char *Game_DifficultyName(Difficulty diff);
 
 #endif // GAME_H
