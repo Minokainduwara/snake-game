@@ -1,0 +1,86 @@
+name: Build macOS App
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build-macos:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install raylib
+        run: |
+          brew update
+          brew install raylib
+
+      - name: Build snake binary
+        run: |
+          make clean
+          make
+          ls -la snake
+
+      - name: Create .app bundle
+        run: |
+          mkdir -p "Snake Game.app/Contents/MacOS"
+          mkdir -p "Snake Game.app/Contents/Resources"
+          cp snake "Snake Game.app/Contents/MacOS/SnakeGame"
+          # Create Info.plist
+          cat > "Snake Game.app/Contents/Info.plist" << EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>CFBundleExecutable</key>
+              <string>SnakeGame</string>
+              <key>CFBundleIdentifier</key>
+              <string>com.minoka.snakegame</string>
+              <key>CFBundleName</key>
+              <string>Snake Game</string>
+              <key>CFBundleVersion</key>
+              <string>1.0.0</string>
+              <key>CFBundleShortVersionString</key>
+              <string>1.0.0</string>
+              <key>CFBundlePackageType</key>
+              <string>APPL</string>
+              <key>LSMinimumSystemVersion</key>
+              <string>10.15</string>
+              <key>NSHighResolutionCapable</key>
+              <true/>
+          </dict>
+          </plist>
+          EOF
+
+      - name: Create DMG
+        run: |
+          brew install create-dmg
+          create-dmg \
+            --volname "Snake Game" \
+            --volicon "" \
+            --window-pos 200 120 \
+            --window-size 600 400 \
+            --icon-size 100 \
+            --icon "Snake Game.app" 175 190 \
+            --hide-extension "Snake Game.app" \
+            --app-drop-link 425 190 \
+            "SnakeGame-macOS.dmg" \
+            "Snake Game.app"
+          ls -la SnakeGame-macOS.dmg
+
+      - name: Upload DMG
+        uses: actions/upload-artifact@v4
+        with:
+          name: SnakeGame-macOS
+          path: SnakeGame-macOS.dmg
+
+      - name: Upload portable binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: snake-macos-portable
+          path: snake

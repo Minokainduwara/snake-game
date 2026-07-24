@@ -44,7 +44,15 @@ A classic Snake game built with **C** and **raylib** — cross-platform, with au
 
 ### macOS
 
-**Prerequisites:** [raylib](https://www.raylib.com/) installed via Homebrew
+**Option A — Download DMG (Recommended)**
+
+Download the latest `.dmg` from:
+- **[Google Drive](https://drive.google.com/drive/folders/1gLkAr7Y5-7bxZy72AbD9YwjZ_4aN_ZjO?usp=sharing)** — direct download
+- **[GitHub Actions](https://github.com/Minokainduwara/snake-game/actions)** — automated build artifacts
+
+Open `SnakeGame-macOS.dmg` and drag the app to your Applications folder.
+
+**Option B — Build from source**
 
 ```bash
 brew install raylib
@@ -54,7 +62,19 @@ make run
 
 ### Linux
 
-**Prerequisites:** raylib installed via package manager
+**Option A — Download tar.gz (Recommended)**
+
+Download the latest `SnakeGame-Linux.tar.gz` from:
+- **[Google Drive](https://drive.google.com/drive/folders/1gLkAr7Y5-7bxZy72AbD9YwjZ_4aN_ZjO?usp=sharing)** — direct download
+- **[GitHub Actions](https://github.com/Minokainduwara/snake-game/actions)** — automated build artifacts
+
+```bash
+tar -xzf SnakeGame-Linux.tar.gz
+cd snake-game-linux
+./snake
+```
+
+**Option B — Build from source**
 
 ```bash
 sudo apt install libraylib-dev   # Debian/Ubuntu
@@ -156,13 +176,15 @@ snake-game/
 
 ## 🧪 GitHub Actions
 
-Every push to `main` triggers an automated build:
+Every push to `main` triggers automated builds for all platforms:
 
-1. Cross-compiles `snake.exe` for Windows using MinGW
-2. Builds a full NSIS installer (`SnakeGame-Setup-1.0.0.exe`)
-3. Uploads both as downloadable artifacts
+| Platform | Artifact | Format |
+|----------|----------|--------|
+| 🪟 Windows | `SnakeGame-Setup` | NSIS Installer (`.exe`) |
+| 🍎 macOS | `SnakeGame-macOS` | Disk Image (`.dmg`) |
+| 🐧 Linux | `SnakeGame-Linux` | Archive (`.tar.gz`) |
 
-Go to **[Actions tab](https://github.com/Minokainduwara/snake-game/actions)** to download the latest build.
+Go to **[Actions tab](https://github.com/Minokainduwara/snake-game/actions)** to download the latest builds.
 
 ---
 

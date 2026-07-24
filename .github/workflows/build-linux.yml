@@ -1,0 +1,47 @@
+name: Build Linux Binary
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libraylib-dev make
+
+      - name: Build snake binary
+        run: |
+          make clean
+          make
+          ls -la snake
+
+      - name: Package as tar.gz
+        run: |
+          mkdir -p snake-game-linux
+          cp snake snake-game-linux/
+          cp -r saves snake-game-linux/ 2>/dev/null || mkdir -p snake-game-linux/saves
+          tar -czf SnakeGame-Linux.tar.gz snake-game-linux/
+          ls -la SnakeGame-Linux.tar.gz
+
+      - name: Upload tar.gz
+        uses: actions/upload-artifact@v4
+        with:
+          name: SnakeGame-Linux
+          path: SnakeGame-Linux.tar.gz
+
+      - name: Upload portable binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: snake-linux-portable
+          path: snake
