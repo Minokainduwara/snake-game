@@ -1,25 +1,28 @@
 # Snake Game - Cross-platform Makefile
 # Requires raylib to be installed
 
-CC := clang
+CC ?= clang
 
 # Detect OS
 UNAME_S := $(shell uname -s)
 
+# Allow environment variables to override defaults
+CFLAGS ?= -Wall -Wextra -std=c99
+LIBS ?= -lm
+TARGET ?= snake
+
 ifeq ($(UNAME_S),Darwin)
-    # macOS
-    CFLAGS := $(shell pkg-config --cflags raylib) -Wall -Wextra -std=c99
-    LIBS := $(shell pkg-config --libs raylib) -lm
-    TARGET := snake
+    # macOS - use pkg-config if available, otherwise use environment vars
+    CFLAGS += $(shell pkg-config --cflags raylib 2>/dev/null || echo "")
+    LIBS += $(shell pkg-config --libs raylib 2>/dev/null || echo "")
 else ifeq ($(UNAME_S),Linux)
-    # Linux
-    CFLAGS := $(shell pkg-config --cflags raylib) -Wall -Wextra -std=c99
-    LIBS := $(shell pkg-config --libs raylib) -lm
-    TARGET := snake
+    # Linux - use pkg-config if available, otherwise use environment vars
+    CFLAGS += $(shell pkg-config --cflags raylib 2>/dev/null || echo "")
+    LIBS += $(shell pkg-config --libs raylib 2>/dev/null || echo "")
 else
     # Windows (MinGW)
-    CFLAGS := -I./raylib/include -Wall -Wextra -std=c99
-    LIBS := -L./raylib/lib -lraylib -lopengl32 -lgdi32 -lwinmm -lm
+    CFLAGS += -I./raylib/include
+    LIBS += -L./raylib/lib -lraylib -lopengl32 -lgdi32 -lwinmm
     TARGET := snake.exe
 endif
 
