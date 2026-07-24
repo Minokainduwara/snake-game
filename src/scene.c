@@ -177,9 +177,10 @@ void Scene_DrawMenu(const SceneManager *sm, const GameSettings *settings) {
             c = (i == sm->menu_selection) ? YELLOW : (Color){ 180, 180, 100, 255 };
         }
 
-        // Draw selection background
+        // Draw selection background with consistent padding
         if (i == sm->menu_selection) {
-            DrawRectangle(x - text_w / 2 - 10, y - 5, text_w + 20, 35, (Color){ 50, 80, 50, 255 });
+            int bg_width = (text_w > 150) ? text_w + 30 : 180;
+            DrawRectangle(x - bg_width / 2, y - 10, bg_width, 40, (Color){ 50, 80, 50, 255 });
         }
 
         DrawText(item, x - text_w / 2, y, font_size, c);
@@ -290,22 +291,38 @@ void Scene_DrawOptions(const SceneManager *sm, const GameSettings *settings) {
         int font_size = 25;
         Color c = (i == sm->opt_selection) ? GREEN : LIGHTGRAY;
 
-        if (i == sm->opt_selection) {
-            DrawRectangle(x - 120, y - 5, 240, 35, (Color){ 50, 80, 50, 255 });
-        }
-
         if (i == 0) {
             const char *status = settings->sound_enabled ? "ON" : "OFF";
             Color status_c = settings->sound_enabled ? GREEN : RED;
-            DrawText(TextFormat("%s: ", opt_names[i]), x - 100, y, font_size, c);
-            DrawText(status, x + 60, y, font_size, status_c);
+            char full_text[64];
+            snprintf(full_text, sizeof(full_text), "%s: %s", opt_names[i], status);
+            int text_w = MeasureText(full_text, font_size);
+            
+            if (i == sm->opt_selection) {
+                DrawRectangle(x - text_w / 2 - 15, y - 8, text_w + 30, 40, (Color){ 50, 80, 50, 255 });
+            }
+            
+            DrawText(opt_names[i], x - text_w / 2, y, font_size, c);
+            DrawText(status, x - text_w / 2 + MeasureText(opt_names[i], font_size) + 8, y, font_size, status_c);
         } else if (i == 1) {
             const char *status = settings->show_grid ? "ON" : "OFF";
             Color status_c = settings->show_grid ? GREEN : RED;
-            DrawText(TextFormat("%s: ", opt_names[i]), x - 100, y, font_size, c);
-            DrawText(status, x + 60, y, font_size, status_c);
+            char full_text[64];
+            snprintf(full_text, sizeof(full_text), "%s: %s", opt_names[i], status);
+            int text_w = MeasureText(full_text, font_size);
+            
+            if (i == sm->opt_selection) {
+                DrawRectangle(x - text_w / 2 - 15, y - 8, text_w + 30, 40, (Color){ 50, 80, 50, 255 });
+            }
+            
+            DrawText(opt_names[i], x - text_w / 2, y, font_size, c);
+            DrawText(status, x - text_w / 2 + MeasureText(opt_names[i], font_size) + 8, y, font_size, status_c);
         } else {
-            DrawText(opt_names[i], x - MeasureText(opt_names[i], font_size) / 2, y, font_size, c);
+            int text_w = MeasureText(opt_names[i], font_size);
+            if (i == sm->opt_selection) {
+                DrawRectangle(x - text_w / 2 - 15, y - 8, text_w + 30, 40, (Color){ 50, 80, 50, 255 });
+            }
+            DrawText(opt_names[i], x - text_w / 2, y, font_size, c);
         }
     }
 

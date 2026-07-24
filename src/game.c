@@ -181,12 +181,26 @@ void Game_Draw(SnakeGame *game, const GameSettings *settings) {
 
     // Draw game over
     if (game->game_over) {
-        const char *msg = "GAME OVER - Press R to restart or ESC for menu";
-        int text_w = MeasureText(msg, 30);
-        DrawRectangle(0, GRID_HEIGHT * CELL_SIZE / 2 - 30,
-                      GRID_WIDTH * CELL_SIZE, 60, Fade(BLACK, 0.7f));
-        DrawText(msg, (GRID_WIDTH * CELL_SIZE - text_w) / 2,
-                 GRID_HEIGHT * CELL_SIZE / 2 - 10, 30, RED);
+        const char *line1 = "GAME OVER";
+        const char *line2 = "Press R to restart or ESC for menu";
+        int text_w1 = MeasureText(line1, 40);
+        int text_w2 = MeasureText(line2, 20);
+        int screen_h = GRID_HEIGHT * CELL_SIZE + 50;
+        int popup_height = 120;
+        int popup_y = (screen_h - popup_height) / 2;
+        
+        // Draw semi-transparent background covering the entire screen
+        DrawRectangle(0, 0, GRID_WIDTH * CELL_SIZE, screen_h, Fade(BLACK, 0.7f));
+        
+        // Draw popup box
+        DrawRectangle(0, popup_y, GRID_WIDTH * CELL_SIZE, popup_height, (Color){ 40, 20, 20, 255 });
+        DrawRectangleLines(0, popup_y, GRID_WIDTH * CELL_SIZE, popup_height, RED);
+        
+        // Draw text centered in popup (two lines)
+        DrawText(line1, (GRID_WIDTH * CELL_SIZE - text_w1) / 2,
+                 popup_y + 30, 40, RED);
+        DrawText(line2, (GRID_WIDTH * CELL_SIZE - text_w2) / 2,
+                 popup_y + 75, 20, RAYWHITE);
     }
 }
 
