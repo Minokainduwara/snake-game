@@ -1,0 +1,15 @@
+# Build artifacts
+obj/
+snake
+snake.exe
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+*.dSYM/
