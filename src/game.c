@@ -3,6 +3,10 @@
 #include <time.h>
 #include "raylib.h"
 
+// Forward declarations
+float Game_GetPowerupDurationForDifficulty(Difficulty diff);
+static void DrawHealthBar(int x, int y, int width, int height, float percentage, Color bar_color);
+
 void Game_Init(SnakeGame *game, GameMode mode) {
     game->length = 3;
     game->dir = DIR_RIGHT;
@@ -13,6 +17,12 @@ void Game_Init(SnakeGame *game, GameMode mode) {
     game->time_remaining = 120.0f;  // 2 minutes for Time Attack
     game->survival_timer = 0.0f;
     game->survival_level = 0;
+    game->speed_boost_timer = 0.0f;
+    game->slow_timer = 0.0f;
+    game->special_food_active = 0;
+    game->special_food_timer = 5.0f;  // First special food appears after 5 seconds
+    game->special_food_duration = 8.0f;  // Special food stays for 8 seconds
+    game->difficulty = DIFF_MEDIUM;  // Default, will be set by caller
 
     // Initialize snake body
     for (int i = 0; i < game->length; i++) {
@@ -20,7 +30,7 @@ void Game_Init(SnakeGame *game, GameMode mode) {
         game->body[i].y = GRID_HEIGHT / 2;
     }
 
-    // Spawn first food
+    // Spawn regular apple (always present)
     game->food.x = rand() % GRID_WIDTH;
     game->food.y = rand() % GRID_HEIGHT;
 
@@ -46,8 +56,68 @@ int Game_IsObstacle(const SnakeGame *game, int x, int y) {
     return 0;
 }
 
+// Helper function to spawn regular apple at random location
+static void SpawnApple(SnakeGame *game) {
+    int attempts = 0;
+    int max_attempts = 1000;
+    
+    do {
+        game->food.x = rand() % GRID_WIDTH;
+        game->food.y = rand() % GRID_HEIGHT;
+        attempts++;
+    } while (Game_ShouldSpawnFood(game) && attempts < max_attempts);
+}
+
 void Game_Update(SnakeGame *game, GameMode mode, float tick_rate) {
     if (game->game_over) return;
+
+    // Update effect timers
+    if (game->speed_boost_timer > 0.0f) {
+        game->speed_boost_timer -= tick_rate;
+        if (game->speed_boost_timer <= 0.0f) {
+            game->speed_boost_timer = 0.0f;
+        }
+    }
+    if (game->slow_timer > 0.0f) {
+        game->slow_timer -= tick_rate;
+        if (game->slow_timer <= 0.0f) {
+            game->slow_timer = 0.0f;
+        }
+    }
+
+    // Update special food timer
+    if (game->special_food_active) {
+        game->special_food_duration -= tick_rate;
+        if (game->special_food_duration <= 0.0f) {
+            // Special food expired, set timer for next one
+            game->special_food_active = 0;
+            game->special_food_timer = 8.0f + (rand() % 7);  // 8-15 seconds until next
+        }
+    } else {
+        game->special_food_timer -= tick_rate;
+        if (game->special_food_timer <= 0.0f) {
+            // Spawn new special food
+            game->special_food_active = 1;
+            game->special_food_duration = 8.0f;  // Lasts 8 seconds
+            
+            // Random position
+            int attempts = 0;
+            do {
+                game->special_food.x = rand() % GRID_WIDTH;
+                game->special_food.y = rand() % GRID_HEIGHT;
+                attempts++;
+            } while (attempts < 100 && 
+                     (game->special_food.x == game->food.x && game->special_food.y == game->food.y));
+            
+            // Random special type (not apple)
+            int rand_val = rand() % 5;
+            if (rand_val == 0) game->special_food_type = FOOD_GOLDEN_APPLE;
+            else if (rand_val == 1) game->special_food_type = FOOD_SPEED;
+            else if (rand_val == 2) game->special_food_type = FOOD_ICE;
+            else if (rand_val == 3) game->special_food_type = FOOD_POISON;
+            else game->special_food_type = FOOD_HEART;
+        }
+    }
 
     // Time Attack mode: countdown timer
     if (mode == MODE_TIME_ATTACK) {
@@ -116,8 +186,14 @@ void Game_Update(SnakeGame *game, GameMode mode, float tick_rate) {
         }
     }
 
-    // Check food collision
-    int ate = (new_head.x == game->food.x && new_head.y == game->food.y);
+    // Check food collision (regular apple)
+    int ate_apple = (new_head.x == game->food.x && new_head.y == game->food.y);
+    
+    // Check special food collision
+    int ate_special = 0;
+    if (game->special_food_active) {
+        ate_special = (new_head.x == game->special_food.x && new_head.y == game->special_food.y);
+    }
 
     // Move body: shift all segments forward
     for (int i = game->length - 1; i > 0; i--) {
@@ -125,11 +201,57 @@ void Game_Update(SnakeGame *game, GameMode mode, float tick_rate) {
     }
     game->body[0] = new_head;
 
-    if (ate) {
-        // Grow snake by adding a new segment at the tail
+    // Handle apple collision
+    if (ate_apple) {
+        game->score += 10;
         game->length++;
         game->body[game->length - 1] = game->body[game->length - 2];
-        game->score += 10;
+        SpawnApple(game);
+    }
+    
+    // Handle special food collision
+    if (ate_special) {
+        switch (game->special_food_type) {
+            case FOOD_GOLDEN_APPLE:
+                game->score += 50;
+                game->length++;
+                game->body[game->length - 1] = game->body[game->length - 2];
+                break;
+                
+            case FOOD_SPEED:
+                game->score += 10;
+                game->length++;
+                game->body[game->length - 1] = game->body[game->length - 2];
+                // Duration scales with difficulty
+                game->speed_boost_timer = 5.0f * Game_GetPowerupDurationForDifficulty(game->difficulty);
+                game->slow_timer = 0.0f;
+                break;
+                
+            case FOOD_ICE:
+                game->score += 10;
+                game->length++;
+                game->body[game->length - 1] = game->body[game->length - 2];
+                // Duration scales with difficulty
+                game->slow_timer = 5.0f * Game_GetPowerupDurationForDifficulty(game->difficulty);
+                game->speed_boost_timer = 0.0f;
+                break;
+                
+            case FOOD_POISON:
+                game->score -= 10;
+                if (game->score < 0) game->score = 0;
+                if (game->length > 3) {
+                    game->length -= 2;
+                }
+                break;
+                
+            case FOOD_HEART:
+                game->score += 20;
+                game->length++;
+                game->body[game->length - 1] = game->body[game->length - 2];
+                break;
+        }
+        game->special_food_active = 0;
+        game->special_food_timer = 8.0f + (rand() % 7);  // 8-15 seconds until next
     }
 }
 
@@ -161,10 +283,61 @@ void Game_Draw(SnakeGame *game, const GameSettings *settings) {
                       CELL_SIZE - 2, CELL_SIZE - 2, c);
     }
 
-    // Draw food
-    DrawCircle(game->food.x * CELL_SIZE + CELL_SIZE / 2,
-               game->food.y * CELL_SIZE + CELL_SIZE / 2,
-               CELL_SIZE / 2 - 2, RED);
+    // Draw regular apple (always present)
+    int food_x = game->food.x * CELL_SIZE + CELL_SIZE / 2;
+    int food_y = game->food.y * CELL_SIZE + CELL_SIZE / 2;
+    int food_radius = CELL_SIZE / 2 - 4;
+    
+    // Apple: red circle with stem
+    DrawCircle(food_x, food_y, food_radius, RED);
+    DrawCircleLines(food_x, food_y, food_radius, (Color){ 150, 0, 0, 255 });
+    DrawLine(food_x, food_y - food_radius, food_x + 3, food_y - food_radius - 5, BROWN);
+
+    // Draw special food (if active)
+    if (game->special_food_active) {
+        int special_x = game->special_food.x * CELL_SIZE + CELL_SIZE / 2;
+        int special_y = game->special_food.y * CELL_SIZE + CELL_SIZE / 2;
+        
+        switch (game->special_food_type) {
+            case FOOD_GOLDEN_APPLE: {
+                DrawCircle(special_x, special_y, food_radius + 2, GOLD);
+                DrawCircle(special_x, special_y, food_radius, YELLOW);
+                DrawCircleLines(special_x, special_y, food_radius, ORANGE);
+                DrawText("★", special_x - 8, special_y - 8, 16, WHITE);
+                break;
+            }
+            case FOOD_SPEED: {
+                DrawCircle(special_x, special_y, food_radius, YELLOW);
+                DrawCircleLines(special_x, special_y, food_radius, ORANGE);
+                DrawText("!", special_x - 6, special_y - 10, 20, BLACK);
+                break;
+            }
+            case FOOD_ICE: {
+                DrawCircle(special_x, special_y, food_radius, SKYBLUE);
+                DrawCircleLines(special_x, special_y, food_radius, BLUE);
+                DrawLine(special_x, special_y - food_radius, special_x, special_y + food_radius, (Color){ 200, 240, 255, 255 });
+                DrawLine(special_x - food_radius, special_y, special_x + food_radius, special_y, (Color){ 200, 240, 255, 255 });
+                break;
+            }
+            case FOOD_POISON: {
+                DrawCircle(special_x, special_y, food_radius, DARKGREEN);
+                DrawCircleLines(special_x, special_y, food_radius, (Color){ 0, 80, 0, 255 });
+                DrawText("X", special_x - 8, special_y - 8, 16, BLACK);
+                break;
+            }
+            case FOOD_HEART: {
+                DrawCircle(special_x - 6, special_y - 4, food_radius / 2, PINK);
+                DrawCircle(special_x + 6, special_y - 4, food_radius / 2, PINK);
+                DrawTriangle((Vector2){special_x, special_y + 8},
+                            (Vector2){special_x - food_radius, special_y - 4},
+                            (Vector2){special_x + food_radius, special_y - 4},
+                            PINK);
+                DrawCircleLines(special_x - 6, special_y - 4, food_radius / 2, RED);
+                DrawCircleLines(special_x + 6, special_y - 4, food_radius / 2, RED);
+                break;
+            }
+        }
+    }
 
     // Draw score
     DrawText(TextFormat("Score: %d", game->score), 10, GRID_HEIGHT * CELL_SIZE + 10, 20, DARKGRAY);
@@ -178,6 +351,28 @@ void Game_Draw(SnakeGame *game, const GameSettings *settings) {
         DrawText(TextFormat("Level: %d", game->survival_level + 1),
                  GRID_WIDTH * CELL_SIZE / 2 - 50, GRID_HEIGHT * CELL_SIZE + 10, 20, DARKGRAY);
     }
+    
+    // Draw powerup health bars (HUD area below grid)
+    int bar_x = 10;
+    int bar_width = 150;
+    int bar_height = 14;
+    int hud_start_y = GRID_HEIGHT * CELL_SIZE + 5;
+    int current_y = hud_start_y + 30;  // Below score which is at hud_start_y + 5
+    
+    // Speed boost health bar
+    if (game->speed_boost_timer > 0.0f) {
+        float speed_percentage = game->speed_boost_timer / (5.0f * Game_GetPowerupDurationForDifficulty(settings->difficulty));
+        DrawHealthBar(bar_x, current_y, bar_width, bar_height, speed_percentage, YELLOW);
+        DrawText("SPEED", bar_x, current_y - 12, 12, YELLOW);
+        current_y += bar_height + 8;
+    }
+    
+    // Slow effect health bar
+    if (game->slow_timer > 0.0f) {
+        float slow_percentage = game->slow_timer / (5.0f * Game_GetPowerupDurationForDifficulty(settings->difficulty));
+        DrawHealthBar(bar_x, current_y, bar_width, bar_height, slow_percentage, SKYBLUE);
+        DrawText("SLOW", bar_x, current_y - 12, 12, SKYBLUE);
+    }
 
     // Draw game over
     if (game->game_over) {
@@ -185,7 +380,7 @@ void Game_Draw(SnakeGame *game, const GameSettings *settings) {
         const char *line2 = "Press R to restart or ESC for menu";
         int text_w1 = MeasureText(line1, 40);
         int text_w2 = MeasureText(line2, 20);
-        int screen_h = GRID_HEIGHT * CELL_SIZE + 50;
+        int screen_h = GRID_HEIGHT * CELL_SIZE + 100;
         int popup_height = 120;
         int popup_y = (screen_h - popup_height) / 2;
         
@@ -220,7 +415,7 @@ int Game_ShouldSpawnFood(SnakeGame *game) {
     return 0;
 }
 
-float Game_GetTickRate(Difficulty diff, GameMode mode, int survival_level) {
+float Game_GetTickRate(Difficulty diff, GameMode mode, int survival_level, float speed_boost_timer, float slow_timer) {
     float base_rate;
     switch (diff) {
         case DIFF_EASY:   base_rate = 0.20f; break;
@@ -241,6 +436,16 @@ float Game_GetTickRate(Difficulty diff, GameMode mode, int survival_level) {
         base_rate = 0.06f;
     }
 
+    // Apply speed boost (2x faster = half the tick rate)
+    if (speed_boost_timer > 0.0f) {
+        base_rate *= 0.5f;
+    }
+    
+    // Apply slow effect (0.5x speed = double the tick rate)
+    if (slow_timer > 0.0f) {
+        base_rate *= 2.0f;
+    }
+
     return base_rate;
 }
 
@@ -251,6 +456,40 @@ const char *Game_DifficultyName(Difficulty diff) {
         case DIFF_HARD:   return "Hard";
         case DIFF_EXPERT: return "Expert";
         default:          return "Unknown";
+    }
+}
+
+float Game_GetPowerupDuration(GameMode mode) {
+    (void)mode;  // Unused for now, but kept for consistency
+    // Base duration is 5 seconds
+    // This will be multiplied by difficulty factor in the caller
+    return 1.0f;
+}
+
+float Game_GetPowerupDurationForDifficulty(Difficulty diff) {
+    switch (diff) {
+        case DIFF_EASY:   return 1.6f;  // 8 seconds
+        case DIFF_MEDIUM: return 1.0f;  // 5 seconds
+        case DIFF_HARD:   return 0.75f; // 3.75 seconds
+        case DIFF_EXPERT: return 0.5f;  // 2.5 seconds
+        default:          return 1.0f;
+    }
+}
+
+// Helper function to draw a health bar
+static void DrawHealthBar(int x, int y, int width, int height, float percentage, Color bar_color) {
+    // Clamp percentage
+    if (percentage < 0.0f) percentage = 0.0f;
+    if (percentage > 1.0f) percentage = 1.0f;
+    
+    // Draw background
+    DrawRectangle(x, y, width, height, (Color){ 50, 50, 50, 255 });
+    DrawRectangleLines(x, y, width, height, (Color){ 150, 150, 150, 255 });
+    
+    // Draw filled portion
+    int fill_width = (int)(width * percentage);
+    if (fill_width > 0) {
+        DrawRectangle(x + 1, y + 1, fill_width - 2, height - 2, bar_color);
     }
 }
 
@@ -285,6 +524,14 @@ void Game_TakeSnapshot(const SnakeGame *game, GameSnapshot *snap, GameMode mode)
         snap->obstacles[i] = game->obstacles[i];
     }
     snap->obstacle_count = game->obstacle_count;
+    snap->speed_boost_timer = game->speed_boost_timer;
+    snap->slow_timer = game->slow_timer;
+    snap->special_food = game->special_food;
+    snap->special_food_type = game->special_food_type;
+    snap->special_food_timer = game->special_food_timer;
+    snap->special_food_duration = game->special_food_duration;
+    snap->special_food_active = game->special_food_active;
+    snap->difficulty = game->difficulty;
 }
 
 void Game_RestoreSnapshot(SnakeGame *game, const GameSnapshot *snap, GameMode mode) {
@@ -304,4 +551,12 @@ void Game_RestoreSnapshot(SnakeGame *game, const GameSnapshot *snap, GameMode mo
         game->obstacles[i] = snap->obstacles[i];
     }
     game->obstacle_count = snap->obstacle_count;
+    game->speed_boost_timer = snap->speed_boost_timer;
+    game->slow_timer = snap->slow_timer;
+    game->special_food = snap->special_food;
+    game->special_food_type = snap->special_food_type;
+    game->special_food_timer = snap->special_food_timer;
+    game->special_food_duration = snap->special_food_duration;
+    game->special_food_active = snap->special_food_active;
+    game->difficulty = snap->difficulty;
 }

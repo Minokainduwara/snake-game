@@ -7,7 +7,7 @@
 #include <time.h>
 
 #define SCREEN_WIDTH  (GRID_WIDTH * CELL_SIZE)
-#define SCREEN_HEIGHT (GRID_HEIGHT * CELL_SIZE + 50)  // extra space for score
+#define SCREEN_HEIGHT (GRID_HEIGHT * CELL_SIZE + 100)  // extra space for score + powerup bars
 
 int main(void) {
     srand((unsigned int)time(NULL));
@@ -46,6 +46,7 @@ int main(void) {
                 if (sm.has_saved_game) {
                     // Resume from saved state
                     Game_RestoreSnapshot(&game, &saved_snap, settings.mode);
+                    game.difficulty = settings.difficulty;  // Ensure difficulty is set from settings
                     game_was_initialized = 1;
                     tick_timer = 0.0f;
                     food_needs_respawn = 0;
@@ -73,6 +74,7 @@ int main(void) {
             // Initialize game if not yet initialized
             if (!game_was_initialized) {
                 Game_Init(&game, settings.mode);
+                game.difficulty = settings.difficulty;
                 if (settings.sound_enabled) Audio_PlayStart();
                 game_was_initialized = 1;
                 tick_timer = 0.0f;
@@ -94,7 +96,8 @@ int main(void) {
             }
 
             // Update
-            float tick_rate = Game_GetTickRate(settings.difficulty, settings.mode, game.survival_level);
+            float tick_rate = Game_GetTickRate(settings.difficulty, settings.mode, 
+                                               game.survival_level, game.speed_boost_timer, game.slow_timer);
             tick_timer += GetFrameTime();
             if (tick_timer >= tick_rate) {
                 tick_timer = 0.0f;
@@ -136,6 +139,7 @@ int main(void) {
             // Restart on R
             if (game.game_over && IsKeyPressed(KEY_R)) {
                 Game_Init(&game, settings.mode);
+                game.difficulty = settings.difficulty;
                 if (settings.sound_enabled) Audio_PlayStart();
                 tick_timer = 0.0f;
                 food_needs_respawn = 0;

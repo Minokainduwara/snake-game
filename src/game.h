@@ -23,6 +23,15 @@ typedef enum {
 } Difficulty;
 
 typedef enum {
+    FOOD_APPLE = 0,        // +10 points, normal growth
+    FOOD_GOLDEN_APPLE,     // +50 points, normal growth
+    FOOD_SPEED,            // +10 points, temporary speed boost
+    FOOD_ICE,              // +10 points, temporary slow
+    FOOD_POISON,           // -10 points, lose length
+    FOOD_HEART             // +20 points
+} FoodType;
+
+typedef enum {
     MODE_CLASSIC = 0,
     MODE_TIME_ATTACK,
     MODE_SURVIVAL,
@@ -41,7 +50,9 @@ typedef struct {
     int length;
     Direction dir;
     Direction next_dir;
-    Position food;
+    Position food;              // Regular apple (always present)
+    Position special_food;      // Special food (temporary)
+    FoodType special_food_type;
     int score;
     int game_over;
     Position obstacles[MAX_OBSTACLES];
@@ -49,6 +60,12 @@ typedef struct {
     float time_remaining;
     float survival_timer;
     int survival_level;
+    float speed_boost_timer;    // Remaining time for speed boost
+    float slow_timer;           // Remaining time for slow effect
+    float special_food_timer;   // Time until special food appears
+    float special_food_duration; // How long special food stays
+    int special_food_active;    // 1 if special food is on screen
+    Difficulty difficulty;      // Current difficulty for powerup scaling
 } SnakeGame;
 
 typedef struct {
@@ -66,6 +83,8 @@ typedef struct {
     Direction dir;
     Direction next_dir;
     Position food;
+    Position special_food;
+    FoodType special_food_type;
     int score;
     int game_over;
     int valid;
@@ -75,13 +94,19 @@ typedef struct {
     int survival_level;
     Position obstacles[MAX_OBSTACLES];
     int obstacle_count;
+    float speed_boost_timer;
+    float slow_timer;
+    float special_food_timer;
+    float special_food_duration;
+    int special_food_active;
+    Difficulty difficulty;       // Difficulty for powerup scaling on resume
 } GameSnapshot;
 
 void Game_Init(SnakeGame *game, GameMode mode);
 void Game_Update(SnakeGame *game, GameMode mode, float tick_rate);
 void Game_Draw(SnakeGame *game, const GameSettings *settings);
 int Game_ShouldSpawnFood(SnakeGame *game);
-float Game_GetTickRate(Difficulty diff, GameMode mode, int survival_level);
+float Game_GetTickRate(Difficulty diff, GameMode mode, int survival_level, float speed_boost_timer, float slow_timer);
 const char *Game_DifficultyName(Difficulty diff);
 const char *GameModeName(GameMode mode);
 void Game_TakeSnapshot(const SnakeGame *game, GameSnapshot *snap, GameMode mode);
