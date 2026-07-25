@@ -198,6 +198,15 @@ int main(void) {
             Scene_DrawHighScores(&sm, &settings);
             EndDrawing();
         }
+
+        // ─── SCENE: MANUAL ─────────────────────────────────────────
+        else if (sm.current_scene == SCENE_MANUAL) {
+            Scene_UpdateManual(&sm, &settings);
+
+            BeginDrawing();
+            Scene_DrawManual(&sm, &settings);
+            EndDrawing();
+        }
     }
 
     // Save settings on exit

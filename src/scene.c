@@ -4,18 +4,19 @@
 #include <string.h>
 #include <stdio.h>
 
-#define MENU_ITEMS_NO_RESUME 7
+#define MENU_ITEMS_NO_RESUME 8
 static const char *menu_items_no_resume[MENU_ITEMS_NO_RESUME] = {
     "New Game",
     "Game Mode",
     "Difficulty",
     "Options",
     "High Scores",
+    "Game Manual",
     "Save & Quit",
     "Exit"
 };
 
-#define MENU_ITEMS_RESUME 8
+#define MENU_ITEMS_RESUME 9
 static const char *menu_items_resume[MENU_ITEMS_RESUME] = {
     "Resume",
     "New Game",
@@ -23,6 +24,7 @@ static const char *menu_items_resume[MENU_ITEMS_RESUME] = {
     "Difficulty",
     "Options",
     "High Scores",
+    "Game Manual",
     "Save & Quit",
     "Exit"
 };
@@ -60,6 +62,7 @@ void Scene_Init(SceneManager *sm) {
     sm->highscores_selection = 0;
     sm->mode_selection = 0;
     sm->has_saved_game = 0;
+    sm->manual_page = 0;
 }
 
 static int GetMenuItemCount(const SceneManager *sm) {
@@ -115,11 +118,15 @@ void Scene_UpdateMenu(SceneManager *sm, GameSettings *settings) {
                 case 3: sm->current_scene = SCENE_DIFFICULTY; break;
                 case 4: sm->current_scene = SCENE_OPTIONS; break;
                 case 5: sm->current_scene = SCENE_HIGH_SCORES; break;
-                case 6: // Save & Quit
+                case 6: // Game Manual
+                    sm->manual_page = 0;
+                    sm->current_scene = SCENE_MANUAL;
+                    break;
+                case 7: // Save & Quit
                     Save_SaveSettings(settings);
                     sm->current_scene = SCENE_EXIT;
                     break;
-                case 7: sm->current_scene = SCENE_EXIT; break;
+                case 8: sm->current_scene = SCENE_EXIT; break;
             }
         } else {
             // No resume mode menu
@@ -131,11 +138,15 @@ void Scene_UpdateMenu(SceneManager *sm, GameSettings *settings) {
                 case 2: sm->current_scene = SCENE_DIFFICULTY; break;
                 case 3: sm->current_scene = SCENE_OPTIONS; break;
                 case 4: sm->current_scene = SCENE_HIGH_SCORES; break;
-                case 5: // Save & Quit
+                case 5: // Game Manual
+                    sm->manual_page = 0;
+                    sm->current_scene = SCENE_MANUAL;
+                    break;
+                case 6: // Save & Quit
                     Save_SaveSettings(settings);
                     sm->current_scene = SCENE_EXIT;
                     break;
-                case 6: sm->current_scene = SCENE_EXIT; break;
+                case 7: sm->current_scene = SCENE_EXIT; break;
             }
         }
     }
@@ -407,4 +418,148 @@ void Scene_DrawHighScores(const SceneManager *sm, const GameSettings *settings) 
     DrawText(score_text, screen_w / 2 - MeasureText(score_text, 30) / 2, 220, 30, RAYWHITE);
 
     DrawText("Press ENTER/ESC to go back", screen_w / 2 - MeasureText("Press ENTER/ESC to go back", 15) / 2, 350, 15, GRAY);
+}
+
+// ─── Game Manual ─────────────────────────────────────────
+void Scene_UpdateManual(SceneManager *sm, GameSettings *settings) {
+    (void)settings;
+
+    // Page navigation
+    if (IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_A)) {
+        if (sm->manual_page > 0) sm->manual_page--;
+    }
+    if (IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_D)) {
+        if (sm->manual_page < 1) sm->manual_page++;
+    }
+
+    // Go back to menu
+    if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_ESCAPE) || IsKeyPressed(KEY_SPACE) ||
+        IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        sm->current_scene = SCENE_MENU;
+    }
+}
+
+void Scene_DrawManual(const SceneManager *sm, const GameSettings *settings) {
+    (void)settings;
+    int screen_w = GRID_WIDTH * CELL_SIZE;
+    int screen_h = GRID_HEIGHT * CELL_SIZE + 50;
+
+    ClearBackground((Color){ 20, 20, 30, 255 });
+
+    // Title
+    const char *title = "GAME MANUAL";
+    DrawText(title, screen_w / 2 - MeasureText(title, 40) / 2, 30, 40, GREEN);
+
+    // Page indicator
+    char page_text[32];
+    snprintf(page_text, sizeof(page_text), "Page %d of 2", sm->manual_page + 1);
+    DrawText(page_text, screen_w - MeasureText(page_text, 20) - 10, 35, 20, GRAY);
+
+    int section_x = 30;
+    int content_x = 50;
+    int y = 95;
+
+    if (sm->manual_page == 0) {
+        // --- Objective ---
+        DrawText("OBJECTIVE", section_x, y, 22, YELLOW);
+        y += 30;
+        DrawText("Eat food to grow your snake. Avoid walls,", content_x, y, 16, LIGHTGRAY);
+        y += 20;
+        DrawText("obstacles, and yourself. Each food eaten", content_x, y, 16, LIGHTGRAY);
+        y += 20;
+        DrawText("scores points and grows your snake.", content_x, y, 16, LIGHTGRAY);
+        y += 30;
+
+        // --- Controls ---
+        DrawText("CONTROLS", section_x, y, 22, YELLOW);
+        y += 30;
+        DrawText("Arrow Keys / WASD  - Move snake", content_x, y, 16, LIGHTGRAY);
+        y += 20;
+        DrawText("ESC                - Pause & save / Go back", content_x, y, 16, LIGHTGRAY);
+        y += 20;
+        DrawText("R                  - Restart (game over)", content_x, y, 16, LIGHTGRAY);
+        y += 20;
+        DrawText("Enter / Space      - Select", content_x, y, 16, LIGHTGRAY);
+        y += 20;
+        DrawText("Mouse Click        - Select menu items", content_x, y, 16, LIGHTGRAY);
+        y += 30;
+
+        // --- Game Modes ---
+        DrawText("GAME MODES", section_x, y, 22, YELLOW);
+        y += 30;
+        DrawText("Classic      - Standard snake, walls kill", content_x, y, 16, LIGHTGRAY);
+        y += 20;
+        DrawText("Time Attack  - 2-minute countdown", content_x, y, 16, LIGHTGRAY);
+        y += 20;
+        DrawText("Survival     - Speed increases every 30s", content_x, y, 16, LIGHTGRAY);
+        y += 20;
+        DrawText("Maze         - 15 obstacles on the grid", content_x, y, 16, LIGHTGRAY);
+        y += 20;
+        DrawText("No-Wall      - Wrap around edges", content_x, y, 16, LIGHTGRAY);
+        y += 20;
+        DrawText("Hardcore     - Fixed high speed, one mistake = game over", content_x, y, 16, LIGHTGRAY);
+        y += 30;
+
+        // --- Difficulty ---
+        DrawText("DIFFICULTY LEVELS", section_x, y, 22, YELLOW);
+        y += 30;
+        DrawText("Easy   (0.20s)  - Slow, great for beginners", content_x, y, 16, LIGHTGRAY);
+        y += 20;
+        DrawText("Medium (0.15s)  - Normal speed (default)", content_x, y, 16, LIGHTGRAY);
+        y += 20;
+        DrawText("Hard   (0.10s)  - Fast", content_x, y, 16, LIGHTGRAY);
+        y += 20;
+        DrawText("Expert (0.06s)  - Very fast, for pros", content_x, y, 16, LIGHTGRAY);
+    } else {
+        // --- Powerups ---
+        DrawText("POWERUPS", section_x, y, 22, YELLOW);
+        y += 30;
+        DrawText("Special food appears periodically.", content_x, y, 16, LIGHTGRAY);
+        y += 20;
+        DrawText("Each type has a unique effect:", content_x, y, 16, LIGHTGRAY);
+        y += 30;
+        DrawText("Golden Apple  +50 pts, grows snake", content_x, y, 16, LIGHTGRAY);
+        y += 20;
+        DrawText("Speed Boost   +10 pts, 2x speed temporarily", content_x, y, 16, LIGHTGRAY);
+        y += 20;
+        DrawText("Ice           +10 pts, slows down temporarily", content_x, y, 16, LIGHTGRAY);
+        y += 20;
+        DrawText("Poison        -10 pts, loses 2 segments", content_x, y, 16, LIGHTGRAY);
+        y += 20;
+        DrawText("Heart         +20 pts, grows snake", content_x, y, 16, LIGHTGRAY);
+        y += 30;
+        DrawText("Durations scale with difficulty:", content_x, y, 16, LIGHTGRAY);
+        y += 20;
+        DrawText("Easy: 8s | Medium: 5s | Hard: 3.75s | Expert: 2.5s", content_x, y, 16, LIGHTGRAY);
+        y += 30;
+
+        // --- Save System ---
+        DrawText("SAVE SYSTEM", section_x, y, 22, YELLOW);
+        y += 30;
+        DrawText("ESC during gameplay - Save and return to menu", content_x, y, 16, LIGHTGRAY);
+        y += 20;
+        DrawText("Resume from menu    - Continue saved game", content_x, y, 16, LIGHTGRAY);
+        y += 20;
+        DrawText("High scores         - Saved automatically", content_x, y, 16, LIGHTGRAY);
+        y += 20;
+        DrawText("Settings            - Saved across sessions", content_x, y, 16, LIGHTGRAY);
+        y += 30;
+
+        // --- Tips ---
+        DrawText("TIPS", section_x, y, 22, YELLOW);
+        y += 30;
+        DrawText("- Plan ahead; the snake moves continuously", content_x, y, 16, LIGHTGRAY);
+        y += 20;
+        DrawText("- Use No-Wall mode to escape tight spots", content_x, y, 16, LIGHTGRAY);
+        y += 20;
+        DrawText("- Poison shrinks your snake but costs points", content_x, y, 16, LIGHTGRAY);
+        y += 20;
+        DrawText("- Watch the powerup timers in the HUD", content_x, y, 16, LIGHTGRAY);
+        y += 20;
+        DrawText("- Special food respawns every 8-15 seconds", content_x, y, 16, LIGHTGRAY);
+    }
+
+    // Navigation hint
+    DrawText("Use LEFT/RIGHT or A/D to navigate pages, ESC to go back",
+             10, screen_h - 25, 15, GRAY);
 }
